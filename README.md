@@ -3,7 +3,7 @@
 Welcome to my professional portfolio website showcasing my work as a Java Full Stack Developer with expertise in Flutter mobile development.
 
 ## 🚀 Live Demo
-[View Portfolio](https://YOUR_USERNAME.github.io/YOUR_REPO_NAME)
+[View Portfolio](https://chaysays.github.io/portfolio/)
 
 ## 🛠️ Technologies Used
 - **Frontend**: HTML5, CSS3, JavaScript, React
@@ -21,7 +21,6 @@ Welcome to my professional portfolio website showcasing my work as a Java Full S
 
 ## 📧 Contact
 - **Email**: saichaitanyaampabathina@gmail.com
-- **Phone**: +1 (508) 971-7118
 - **Location**: Edmond, Oklahoma
 - **LinkedIn**: [chaitusays](https://www.linkedin.com/in/chaitusays/)
 
