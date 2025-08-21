@@ -7,11 +7,28 @@ hamburger.addEventListener('click', () => {
     navMenu.classList.toggle('active');
 });
 
+// Logo click functionality - scroll to top
+const navLogo = document.getElementById('navLogo');
+if (navLogo) {
+    navLogo.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // Close mobile menu if open
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+    });
+}
+
 // Close mobile menu when clicking on a link
-document.querySelectorAll('.nav-link').forEach(n => n.addEventListener('click', () => {
-    hamburger.classList.remove('active');
-    navMenu.classList.remove('active');
-}));
+document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        navMenu.classList.remove('active');
+    });
+});
 
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -32,107 +49,180 @@ window.addEventListener('scroll', () => {
     const navbar = document.querySelector('.navbar');
     if (window.scrollY > 100) {
         navbar.style.background = 'rgba(255, 255, 255, 0.98)';
-        navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.15)';
+        navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
     } else {
         navbar.style.background = 'rgba(255, 255, 255, 0.95)';
-        navbar.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
+        navbar.style.boxShadow = 'none';
     }
 });
 
-// Birthday confetti animation
-function createConfetti() {
-    const confettiContainer = document.createElement('div');
-    confettiContainer.style.position = 'fixed';
-    confettiContainer.style.top = '0';
-    confettiContainer.style.left = '0';
-    confettiContainer.style.width = '100%';
-    confettiContainer.style.height = '100%';
-    confettiContainer.style.pointerEvents = 'none';
-    confettiContainer.style.zIndex = '9999';
-    document.body.appendChild(confettiContainer);
+// Intersection Observer for animations
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+};
 
-    const colors = ['#e74c3c', '#2c3e50', '#34495e', '#f39c12', '#e67e22', '#95a5a6'];
-    const emojis = ['🎉', '🎂', '✨', '💖', '🎊', '🎈'];
-
-    for (let i = 0; i < 50; i++) {
-        setTimeout(() => {
-            const confetti = document.createElement('div');
-            confetti.style.position = 'absolute';
-            confetti.style.left = Math.random() * 100 + '%';
-            confetti.style.top = '-20px';
-            confetti.style.fontSize = Math.random() * 20 + 10 + 'px';
-            confetti.style.color = colors[Math.floor(Math.random() * colors.length)];
-            confetti.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-            confetti.style.animation = `fall ${Math.random() * 3 + 2}s linear forwards`;
-            confettiContainer.appendChild(confetti);
-
-            // Remove confetti after animation
-            setTimeout(() => {
-                confetti.remove();
-            }, 5000);
-        }, i * 100);
-    }
-
-    // Remove container after all confetti is gone
-    setTimeout(() => {
-        confettiContainer.remove();
-    }, 8000);
-}
-
-// Add fall animation to CSS
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fall {
-        to {
-            transform: translateY(100vh) rotate(360deg);
-            opacity: 0;
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('fade-in-up');
         }
-    }
-`;
-document.head.appendChild(style);
+    });
+}, observerOptions);
 
-// Trigger confetti on page load
-window.addEventListener('load', () => {
-    setTimeout(createConfetti, 1000);
+// Observe all sections for animation
+document.querySelectorAll('section').forEach(section => {
+    observer.observe(section);
 });
 
-// Add click effect to birthday cake
-const birthdayCake = document.querySelector('.birthday-cake');
-if (birthdayCake) {
-    birthdayCake.addEventListener('click', () => {
-        createConfetti();
+// Initialize EmailJS
+(function() {
+    emailjs.init("WIsEjsiubjZV2-SpE"); // You'll need to replace this with your actual EmailJS public key
+})();
+
+// Contact form handling
+const contactForm = document.getElementById('contactForm');
+if (contactForm) {
+    contactForm.addEventListener('submit', function(e) {
+        e.preventDefault();
         
-        // Add a little bounce effect
-        birthdayCake.style.transform = 'scale(1.1)';
-        setTimeout(() => {
-            birthdayCake.style.transform = 'scale(1)';
-        }, 200);
+        // Get form data
+        const formData = new FormData(this);
+        const name = formData.get('name');
+        const email = formData.get('email');
+        const subject = formData.get('subject');
+        const message = formData.get('message');
+        
+        // Basic validation
+        if (!name || !email || !subject || !message) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+        
+        if (!isValidEmail(email)) {
+            showNotification('Please enter a valid email address', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Sending...';
+        submitBtn.disabled = true;
+        
+        // Prepare email template parameters
+        const templateParams = {
+            from_name: name,
+            from_email: email,
+            subject: subject,
+            message: message,
+            to_email: 'saichaitanyaampabathina@gmail.com'
+        };
+        
+        // Send email using EmailJS
+        emailjs.send('service_dt78mjl', 'template_upy9w76', templateParams)
+            .then(function(response) {
+                showNotification('Thank you for your message! I\'ll get back to you soon.', 'success');
+                contactForm.reset();
+            }, function(error) {
+                showNotification('Sorry, there was an error sending your message. Please try again or contact me directly.', 'error');
+            })
+            .finally(function() {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            });
     });
 }
 
-// Parallax effect for floating hearts
-window.addEventListener('scroll', () => {
-    const hearts = document.querySelectorAll('.heart');
-    const scrolled = window.pageYOffset;
-    
-    hearts.forEach((heart, index) => {
-        const speed = 0.5 + (index * 0.1);
-        heart.style.transform = `translateY(${scrolled * speed}px)`;
-    });
-});
+// Email validation helper
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
 
-// Add hover effects to gallery items
-document.querySelectorAll('.gallery-item').forEach(item => {
-    item.addEventListener('mouseenter', () => {
-        item.style.transform = 'translateY(-10px) scale(1.02)';
+// Notification system
+function showNotification(message, type = 'info') {
+    // Remove existing notifications
+    const existingNotification = document.querySelector('.notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <span class="notification-message">${message}</span>
+            <button class="notification-close">&times;</button>
+        </div>
+    `;
+    
+    // Add styles
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        z-index: 10000;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    // Add notification styles to head if not exists
+    if (!document.querySelector('#notification-styles')) {
+        const style = document.createElement('style');
+        style.id = 'notification-styles';
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            .notification-content {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+            }
+            .notification-close {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 1.5rem;
+                cursor: pointer;
+                padding: 0;
+                line-height: 1;
+            }
+            .notification-close:hover {
+                opacity: 0.8;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Close button functionality
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.addEventListener('click', () => {
+        notification.remove();
     });
     
-    item.addEventListener('mouseleave', () => {
-        item.style.transform = 'translateY(0) scale(1)';
-    });
-});
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
 
-// Add typing effect to hero title
+// Typing effect for hero title
 function typeWriter(element, text, speed = 100) {
     let i = 0;
     element.innerHTML = '';
@@ -144,6 +234,7 @@ function typeWriter(element, text, speed = 100) {
             setTimeout(type, speed);
         }
     }
+    
     type();
 }
 
@@ -152,302 +243,102 @@ window.addEventListener('load', () => {
     const heroTitle = document.querySelector('.hero-title');
     if (heroTitle) {
         const originalText = heroTitle.textContent;
-        setTimeout(() => {
-            typeWriter(heroTitle, originalText, 150);
-        }, 500);
+        typeWriter(heroTitle, originalText, 50);
     }
 });
 
-// Add sparkle effect to wish cards
-document.querySelectorAll('.wish-card').forEach(card => {
-    card.addEventListener('mouseenter', () => {
-        // Create sparkle effect
-        for (let i = 0; i < 5; i++) {
-            setTimeout(() => {
-                const sparkle = document.createElement('div');
-                sparkle.innerHTML = '✨';
-                sparkle.style.position = 'absolute';
-                sparkle.style.left = Math.random() * 100 + '%';
-                sparkle.style.top = Math.random() * 100 + '%';
-                sparkle.style.fontSize = '1rem';
-                sparkle.style.animation = 'sparkle 1s ease-out forwards';
-                sparkle.style.pointerEvents = 'none';
-                card.style.position = 'relative';
-                card.appendChild(sparkle);
-                
-                setTimeout(() => sparkle.remove(), 1000);
-            }, i * 200);
+// Add active class to current navigation item
+function updateActiveNavItem() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    let current = '';
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (window.scrollY >= (sectionTop - 200)) {
+            current = section.getAttribute('id');
         }
     });
-});
+    
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+            link.classList.add('active');
+        }
+    });
+}
 
-// Add sparkle animation
-const sparkleStyle = document.createElement('style');
-sparkleStyle.textContent = `
-    @keyframes sparkle {
-        0% {
-            opacity: 0;
-            transform: scale(0) rotate(0deg);
-        }
-        50% {
-            opacity: 1;
-            transform: scale(1) rotate(180deg);
-        }
-        100% {
-            opacity: 0;
-            transform: scale(0) rotate(360deg);
-        }
+// Update active nav item on scroll
+window.addEventListener('scroll', updateActiveNavItem);
+
+// Add CSS for active nav item
+const activeNavStyle = document.createElement('style');
+activeNavStyle.textContent = `
+    .nav-link.active {
+        color: #2563eb !important;
+    }
+    .nav-link.active::after {
+        width: 100% !important;
     }
 `;
-document.head.appendChild(sparkleStyle);
+document.head.appendChild(activeNavStyle);
 
-// Add music toggle (optional - you can add background music)
-function addMusicToggle() {
-    const musicToggle = document.createElement('button');
-    musicToggle.innerHTML = '🎵';
-    musicToggle.style.position = 'fixed';
-    musicToggle.style.bottom = '20px';
-    musicToggle.style.right = '20px';
-    musicToggle.style.width = '50px';
-    musicToggle.style.height = '50px';
-    musicToggle.style.borderRadius = '50%';
-    musicToggle.style.border = 'none';
-    musicToggle.style.background = '#e74c3c';
-    musicToggle.style.color = 'white';
-    musicToggle.style.fontSize = '1.5rem';
-    musicToggle.style.cursor = 'pointer';
-    musicToggle.style.zIndex = '1000';
-    musicToggle.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
-    musicToggle.style.transition = 'all 0.3s ease';
-    
-    musicToggle.addEventListener('click', () => {
-        musicToggle.style.transform = 'scale(0.9)';
-        setTimeout(() => {
-            musicToggle.style.transform = 'scale(1)';
-        }, 100);
-        
-        // You can add music functionality here
-        // For example: play/pause background music
-        console.log('Music toggle clicked! Add your music functionality here.');
+// Skills animation on hover
+document.querySelectorAll('.skill-item').forEach(item => {
+    item.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.1) rotate(2deg)';
     });
     
-    musicToggle.addEventListener('mouseenter', () => {
-        musicToggle.style.transform = 'scale(1.1)';
-        musicToggle.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.4)';
+    item.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1) rotate(0deg)';
+    });
+});
+
+// Project cards hover effect
+document.querySelectorAll('.project-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-10px) scale(1.02)';
     });
     
-    musicToggle.addEventListener('mouseleave', () => {
-        musicToggle.style.transform = 'scale(1)';
-        musicToggle.style.boxShadow = '0 4px 15px rgba(231, 76, 60, 0.3)';
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0) scale(1)';
     });
-    
-    document.body.appendChild(musicToggle);
-}
+});
 
-// Initialize music toggle
-window.addEventListener('load', addMusicToggle);
-
-// Add scroll reveal animations
-function revealOnScroll() {
-    const elements = document.querySelectorAll('.memory-item, .wish-card, .gallery-item');
-    
-    elements.forEach(element => {
-        const elementTop = element.getBoundingClientRect().top;
-        const elementVisible = 150;
-        
-        if (elementTop < window.innerHeight - elementVisible) {
-            element.style.opacity = '1';
-            element.style.transform = 'translateY(0)';
+// Smooth reveal animation for timeline items
+const timelineItems = document.querySelectorAll('.timeline-item');
+const timelineObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateX(0)';
         }
     });
-}
+}, { threshold: 0.3 });
 
-// Initialize scroll reveal
-window.addEventListener('scroll', revealOnScroll);
-window.addEventListener('load', revealOnScroll);
+timelineItems.forEach(item => {
+    item.style.opacity = '0';
+    item.style.transform = 'translateX(-30px)';
+    item.style.transition = 'all 0.6s ease-out';
+    timelineObserver.observe(item);
+});
 
-// Add initial styles for scroll reveal
-const revealStyle = document.createElement('style');
-revealStyle.textContent = `
-    .memory-item, .wish-card, .gallery-item {
+// Add loading animation
+window.addEventListener('load', () => {
+    document.body.classList.add('loaded');
+});
+
+// Add CSS for loading state
+const loadingStyle = document.createElement('style');
+loadingStyle.textContent = `
+    body:not(.loaded) {
         opacity: 0;
-        transform: translateY(30px);
-        transition: all 0.6s ease;
+        transition: opacity 0.5s ease-in;
+    }
+    body.loaded {
+        opacity: 1;
     }
 `;
-document.head.appendChild(revealStyle);
-
-// Add birthday countdown (if you want to show days until birthday)
-function addBirthdayCountdown() {
-    // You can customize this date
-    const birthdayDate = new Date('2024-12-25'); // Change to her actual birthday
-    const today = new Date();
-    
-    // Set this year's birthday
-    birthdayDate.setFullYear(today.getFullYear());
-    
-    // If birthday has passed this year, set to next year
-    if (today > birthdayDate) {
-        birthdayDate.setFullYear(today.getFullYear() + 1);
-    }
-    
-    const timeLeft = birthdayDate - today;
-    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-    
-    if (days === 0) {
-        // It's her birthday!
-        createConfetti();
-    }
-}
-
-// Initialize countdown
-window.addEventListener('load', addBirthdayCountdown);
-
-// Full Screen Image/Video Viewer
-let currentIndex = 0;
-let mediaItems = [];
-
-// Initialize image/video viewer
-function initImageViewer() {
-    const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImage');
-    const modalVideo = document.getElementById('modalVideo');
-    const closeBtn = document.querySelector('.close-modal');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    
-    // Get all gallery images and videos
-    const images = Array.from(document.querySelectorAll('.gallery-image'));
-    const videos = Array.from(document.querySelectorAll('.gallery-video'));
-    
-    // Combine images and videos into mediaItems array
-    mediaItems = [...images, ...videos];
-    
-    // Add click event to all gallery images
-    images.forEach((img, index) => {
-        img.style.cursor = 'pointer';
-        img.addEventListener('click', () => {
-            openModal(index);
-        });
-    });
-    
-    // Add click event to video items
-    document.querySelectorAll('.video-item').forEach((videoItem, index) => {
-        videoItem.addEventListener('click', () => {
-            openModal(images.length + index);
-        });
-    });
-    
-    // Close modal
-    closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    });
-    
-    // Navigation buttons
-    prevBtn.addEventListener('click', () => {
-        currentIndex = (currentIndex - 1 + mediaItems.length) % mediaItems.length;
-        updateModalContent();
-    });
-    
-    nextBtn.addEventListener('click', () => {
-        currentIndex = (currentIndex + 1) % mediaItems.length;
-        updateModalContent();
-    });
-    
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-        if (modal.style.display === 'block') {
-            if (e.key === 'Escape') {
-                closeModal();
-            } else if (e.key === 'ArrowLeft') {
-                currentIndex = (currentIndex - 1 + mediaItems.length) % mediaItems.length;
-                updateModalContent();
-            } else if (e.key === 'ArrowRight') {
-                currentIndex = (currentIndex + 1) % mediaItems.length;
-                updateModalContent();
-            }
-        }
-    });
-}
-
-function openModal(index) {
-    currentIndex = index;
-    const modal = document.getElementById('imageModal');
-    const modalImg = document.getElementById('modalImage');
-    const modalVideo = document.getElementById('modalVideo');
-    
-    // Hide both image and video initially
-    modalImg.style.display = 'none';
-    modalVideo.style.display = 'none';
-    
-    const currentItem = mediaItems[index];
-    
-    if (currentItem.tagName === 'IMG') {
-        modalImg.src = currentItem.src;
-        modalImg.style.display = 'block';
-    } else if (currentItem.tagName === 'VIDEO') {
-        modalVideo.src = currentItem.src;
-        modalVideo.style.display = 'block';
-    }
-    
-    modal.style.display = 'block';
-    
-    // Prevent body scroll
-    document.body.style.overflow = 'hidden';
-    
-    // Add fade-in animation
-    modal.style.opacity = '0';
-    setTimeout(() => {
-        modal.style.opacity = '1';
-    }, 10);
-}
-
-function closeModal() {
-    const modal = document.getElementById('imageModal');
-    const modalVideo = document.getElementById('modalVideo');
-    
-    // Pause video if playing
-    if (modalVideo.src) {
-        modalVideo.pause();
-    }
-    
-    // Add fade-out animation
-    modal.style.opacity = '0';
-    setTimeout(() => {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }, 300);
-}
-
-function updateModalContent() {
-    const modalImg = document.getElementById('modalImage');
-    const modalVideo = document.getElementById('modalVideo');
-    
-    // Hide both image and video initially
-    modalImg.style.display = 'none';
-    modalVideo.style.display = 'none';
-    
-    const currentItem = mediaItems[currentIndex];
-    
-    if (currentItem.tagName === 'IMG') {
-        modalImg.src = currentItem.src;
-        modalImg.style.display = 'block';
-        
-        // Add a subtle zoom effect for images
-        modalImg.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            modalImg.style.transform = 'scale(1)';
-        }, 50);
-    } else if (currentItem.tagName === 'VIDEO') {
-        modalVideo.src = currentItem.src;
-        modalVideo.style.display = 'block';
-    }
-}
-
-// Initialize image viewer when page loads
-window.addEventListener('load', initImageViewer);
-
-console.log('🎉 Happy Birthday Website Loaded! 🎂');
+document.head.appendChild(loadingStyle);
